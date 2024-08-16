@@ -82,7 +82,7 @@ class EcoFlowDictEntity(EcoFlowAbstractEntity):
     async def async_added_to_hass(self):
         await super().async_added_to_hass()
         d = self._client.data.params_observable().subscribe(self._updated)
-        self.async_on_remove(d.dispose)
+        self.schedule_update_ha_state()
 
     def _updated(self, data: dict[str, Any]):
         # update attributes
