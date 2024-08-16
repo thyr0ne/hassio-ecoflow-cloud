@@ -99,7 +99,7 @@ class EcoFlowDictEntity(EcoFlowAbstractEntity):
                 self._attr_entity_registry_enabled_default = True
 
             if self._update_value(values[0].value):
-                self.async_write_ha_state()
+                self.schedule_update_ha_state()
 
     @property
     def extra_state_attributes(self) -> Mapping[str, Any] | None:
