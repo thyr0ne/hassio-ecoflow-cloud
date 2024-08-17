@@ -25,12 +25,19 @@ class ModeDictSelectEntity(DictSelectEntity):
     def __init__(self, client: EcoflowMQTTClient, n: int):
         super().__init__(client, "loadCmdChCtrlInfos[%i]" % n, const.SHP_CIRCUIT_N_MODE % (n + 1), MODES,
                          lambda value: {"moduleType": 0, "operateType": "TCP",
-                                        "params": {"sta": value['sta'], "ctrlMode": value['ctrlMode'], "ch": n,
+                                        "params": {"sta": value.get('sta', value.get('ctrlSta')), "ctrlMode": value['ctrlMode'], "ch": n,
                                                    "cmdSet": 11, "id": 16}})
 
     def _update_value(self, val: Any) -> bool:
         _LOGGER.debug(f"ModeDictSelectEntity._update_value = {val}")
-        return super()._update_value({"sta": val['ctrlSta'], "ctrlMode": val['ctrlMode']})
+        # Map 'ctrlSta' to 'sta' if 'sta' is not present
+        if 'sta' not in val and 'ctrlSta' in val:
+            val['sta'] = val['ctrlSta']
+        if 'sta' in val and 'ctrlMode' in val:
+            return super()._update_value({"sta": val['sta'], "ctrlMode": val['ctrlMode']})
+        else:
+            _LOGGER.error(f"Missing 'sta' or 'ctrlMode' in value: {val}")
+            return False
 
     def sample_value(self):
         return {"sta": -66666, "ctrlMode": -66666}
@@ -40,7 +47,7 @@ class GridChargeEnabledEntity(EnabledEntity):
     def __init__(self, client: EcoflowMQTTClient, n: int):
         super().__init__(client, "energyInfos[%i].stateBean.isGridCharge" % n, const.SHP_AC_N_CHARGING % (n + 1),
                           lambda value: {"moduleType": 0, "operateType": "TCP",
-                                         "params": {"sta": value['sta'], "ctrlMode": value['ctrlMode'], "ch": 10 + n, "cmdSet": 11,
+                                         "params": {"sta": 2 if value else 0, "ctrlMode": 1, "ch": 10 + n, "cmdSet": 11,
                                                     "id": 17}})
 
     def turn_on(self, **kwargs: Any) -> None:
